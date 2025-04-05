@@ -8,9 +8,10 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error
 from lime.lime_tabular import LimeTabularExplainer
 import shap
-import lightgbm as lgb
 import xgboost as xgb
 from sklearn.svm import SVR
+
+@st.cache_data
 
 # ------------------
 # Page Configuration (must be the first Streamlit command)
@@ -97,7 +98,7 @@ st.sidebar.markdown(
       -Select the target variable and predictors using both automatic (model-based) and manual methods. Feature importance is computed via multiple techniques (Random Forest, Gradient Boosting, OLS, LASSO, Ridge, Elastic Net, SHAP, Mutual Information).
 
      **Model Selection & Backtesting:**  
-      -A range of forecasting models (SARIMAX, OLS, Random Forest, Gradient Boosting, XGBoost, LightGBM, SVR, LASSO, Ridge, Elastic Net, VAR, VECM, ECM, VARX) are trained and evaluated using RMSE and MAPE. Backtesting compares forecast performance against historical data.
+      -A range of forecasting models (SARIMAX, OLS, Random Forest, Gradient Boosting, XGBoost, SVR, LASSO, Ridge, Elastic Net, VAR, VECM, ECM, VARX) are trained and evaluated using RMSE and MAPE. Backtesting compares forecast performance against historical data.
 
     ## Scenario and Stress Testing Tabs:
      **What-If Scenarios:**  
@@ -504,17 +505,7 @@ elif selected_tab == "Model Selection":
             st.error(f"Error in XGBoost: {str(e)}")
 
         try:
-            import lightgbm as lgb
-
-            lgb_model = lgb.LGBMRegressor(random_state=42)
-            lgb_model.fit(X_train_scaled, y_train)
-            lgb_forecast = lgb_model.predict(X_test_scaled)
-            metrics["LightGBM"] = {"RMSE": np.sqrt(mean_squared_error(y_test, lgb_forecast)),
-                                   "MAPE": mean_absolute_percentage_error(y_test, lgb_forecast)}
-        except Exception as e:
-            st.error(f"Error in LightGBM: {str(e)}")
-
-        try:
+            
             from sklearn.svm import SVR
 
             svr_model = SVR()
@@ -797,15 +788,6 @@ elif selected_tab == "Results and Recommendations":
             )
             st.info("**Use Case:** Effective for demand forecasting, risk assessment, and marketing analytics.")
 
-        # ----- LightGBM -----
-        elif selected_model == "LightGBM":
-            st.write(
-                f"### LightGBM Model\nLightGBM is designed for speed and scalability with a histogram-based approach."
-                f"\n\n**Performance:** RMSE: {valid_models[selected_model].get('RMSE', 'N/A'):.2f}, "
-                f"MAPE: {valid_models[selected_model].get('MAPE', 'N/A'):.2f}"
-            )
-            st.info("**Use Case:** Suitable for high-dimensional data and tasks like inventory management.")
-
         # ----- SVR -----
         elif selected_model == "SVR":
             st.write(
@@ -933,7 +915,7 @@ elif selected_tab == "Results and Recommendations":
             data = st.session_state["data"]
             target_var = st.session_state["target_var"]
 
-            ml_flat_models = ["Random Forest", "Gradient Boosting", "XGBoost", "LightGBM", "SVR"]
+            ml_flat_models = ["Random Forest", "Gradient Boosting", "XGBoost", "SVR"]
             if selected_model in ml_flat_models:
                 data_aug = data.copy()
                 lag_name = target_var + "_lag1"
@@ -988,12 +970,7 @@ elif selected_tab == "Results and Recommendations":
                 model = xgb.XGBRegressor(random_state=42)
                 model.fit(X_train, y_train)
                 forecast = model.predict(X_test)
-            elif selected_model == "LightGBM":
-                import lightgbm as lgb
-
-                model = lgb.LGBMRegressor(random_state=42)
-                model.fit(X_train, y_train)
-                forecast = model.predict(X_test)
+            
             elif selected_model == "SVR":
                 from sklearn.svm import SVR
 
@@ -1222,17 +1199,6 @@ elif selected_tab == "What If Scenarios":
                 forecasts.append(forecast)
                 if selected_model == "XGBoost":
                     st.success(f"Forecasted Target Variable (XGBoost): {forecast:.2f}")
-
-            # LightGBM
-            if selected_model in ["LightGBM", "Ensemble"]:
-                import lightgbm as lgb
-
-                lgb_model = lgb.LGBMRegressor(random_state=42)
-                lgb_model.fit(X, st.session_state["data"][st.session_state["target_var"]])
-                forecast = lgb_model.predict(input_df)[0]
-                forecasts.append(forecast)
-                if selected_model == "LightGBM":
-                    st.success(f"Forecasted Target Variable (LightGBM): {forecast:.2f}")
 
             # SVR
             if selected_model in ["SVR", "Ensemble"]:
@@ -2131,15 +2097,6 @@ elif selected_tab == "Stress Testing 2":
                 import xgboost as xgb
 
                 model = xgb.XGBRegressor(random_state=42)
-                model.fit(st.session_state["data"][st.session_state["selected_features"]],
-                          st.session_state["data"][st.session_state["target_var"]])
-                forecasts = model.predict(input_data)
-
-            # LightGBM branch
-            elif selected_model_name == "LightGBM":
-                import lightgbm as lgb
-
-                model = lgb.LGBMRegressor(random_state=42)
                 model.fit(st.session_state["data"][st.session_state["selected_features"]],
                           st.session_state["data"][st.session_state["target_var"]])
                 forecasts = model.predict(input_data)
