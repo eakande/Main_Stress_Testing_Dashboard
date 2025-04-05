@@ -11,7 +11,7 @@ import shap
 import xgboost as xgb
 from sklearn.svm import SVR
 
-st.cache_data
+st.cache_data.clear()
 
 # ------------------
 # Page Configuration (must be the first Streamlit command)
