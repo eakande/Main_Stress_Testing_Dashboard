@@ -7,6 +7,6 @@ scikit-learn>=0.22.0
 matplotlib>=3.1.0
 lime>=0.2.0.1
 shap>=0.39.0
-lightgbm>=3.0.0
+xgboost 
 ipython
 
